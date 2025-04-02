@@ -1,40 +1,52 @@
-**CodebaseAnalyzer**
-What is this?
-CodebaseAnalyzer is a tool that looks at GitHub code projects and tells you what they do and how they work. It uses AI to read and understand code.
+# CodebaseAnalyzer
 
-What can it do?
+## What is CodebaseAnalyzer?
+CodebaseAnalyzer is an AI-powered tool that analyzes GitHub repositories to understand their structure, functionality, and potential issues. It helps developers quickly grasp the purpose and key components of a codebase.
 
-Download and study any GitHub project
-Find the most important parts of the code
-Tell you what the project is trying to do
-Find possible problems in the code
-Create a report you can read later
+## Features
+- **Download and analyze any GitHub repository**
+- **Identify key parts of the code**
+- **Summarize the project's purpose**
+- **Detect potential issues in the code**
+- **Generate a detailed report for later reference**
 
-**What you need**
+## Requirements
+To use CodebaseAnalyzer, ensure you have the following installed:
+- Python **3.8** or newer
+- Git
+- **Ollama** with the **llama3.2** model
+- The following Python packages:
+  ```sh
+  pip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
+  ```
 
-Python 3.8 or newer
-Git
-Ollama with the llama3.2 model
-Some Python packages
+## Installation
 
-**How to install**
-
-**Get the code:**
-Copygit clone https://github.com/yourusername/CodebaseAnalyzer.git
+### 1. Clone the repository
+```sh
+git clone https://github.com/yourusername/CodebaseAnalyzer.git
 cd CodebaseAnalyzer
+```
 
-**Install needed packages:**
-Copypip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
+### 2. Install dependencies
+```sh
+pip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
+```
 
-Make sure you have Ollama and the llama3.2 model:
-Copy# Get Ollama from https://ollama.ai/
+### 3. Install Ollama and pull the Llama 3.2 model
+```sh
+# Get Ollama from https://ollama.ai/
 ollama pull llama3.2
+```
 
+## Usage
 
-**How to use it**
-pythonCopyfrom codebase_analyzer import CodebaseAnalyzer
+### Example: Analyzing a GitHub Repository
 
-# Tell it which GitHub project to analyze
+```python
+from codebase_analyzer import CodebaseAnalyzer
+
+# Initialize the analyzer with a GitHub repository
 analyzer = CodebaseAnalyzer(
     repo_url="https://github.com/username/repository",
     repo_name="LocalName",
@@ -44,10 +56,12 @@ analyzer = CodebaseAnalyzer(
 # Run the analysis
 report = analyzer.run_analysis()
 
-# It saves the report as a JSON file
-print("Analysis done!")
-Example
-pythonCopy# Look at the SakilaProject
+# The analysis results are saved as a JSON file
+print("Analysis completed!")
+```
+
+### Example: Analyzing the SakilaProject Repository
+```python
 analyzer = CodebaseAnalyzer(
     repo_url="https://github.com/janjakovacevic/SakilaProject",
     repo_name="SakilaProject",
@@ -55,16 +69,25 @@ analyzer = CodebaseAnalyzer(
 )
 
 report = analyzer.run_analysis()
-How it works
+```
 
-Downloads the code: Gets the GitHub project to your computer
-Reads the files: Looks at all the code files
-Uses AI: Analyzes the code using AI to understand it
-Creates a report: Makes a JSON file with what it found
+## How It Works
+1. **Downloads the code**: Clones the specified GitHub repository to your local system.
+2. **Reads the files**: Examines all source code files within the project.
+3. **Uses AI**: Utilizes AI to analyze and interpret the code structure and purpose.
+4. **Generates a report**: Creates a JSON file summarizing its findings.
 
-Limits
+## Limitations
+- Works best with **smaller projects (under 100MB)**.
+- Optimized for **Java projects**, but supports other languages.
+- Accuracy depends on **AI model quality**.
+- May struggle with **highly complex codebases**.
 
-Works best with smaller projects (under 100MB)
-Works better with Java projects, but can handle others
-Depends on how good the AI model is
-Might miss things in very complex code
+## License
+This project is licensed under the MIT License.
+
+## Contributors
+Feel free to contribute! Fork the repo, create a feature branch, and submit a pull request.
+
+---
+**Made with ❤️ using AI.**
