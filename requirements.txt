@@ -1,0 +1,13 @@
+GitPython
+langchain
+openai
+pandas
+numpy
+faiss-cpu
+PyPDF2
+streamlit
+requests
+python-dotenv
+sentence-transformers
+chromadb
+langchain-community
