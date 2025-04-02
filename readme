@@ -1,9 +1,11 @@
 # CodebaseAnalyzer
 
 ## What is CodebaseAnalyzer?
+
 CodebaseAnalyzer is an AI-powered tool that analyzes GitHub repositories to understand their structure, functionality, and potential issues. It helps developers quickly grasp the purpose and key components of a codebase.
 
 ## Features
+
 - **Download and analyze any GitHub repository**
 - **Identify key parts of the code**
 - **Summarize the project's purpose**
@@ -11,83 +13,13 @@ CodebaseAnalyzer is an AI-powered tool that analyzes GitHub repositories to unde
 - **Generate a detailed report for later reference**
 
 ## Requirements
+
 To use CodebaseAnalyzer, ensure you have the following installed:
+
 - Python **3.8** or newer
 - Git
 - **Ollama** with the **llama3.2** model
 - The following Python packages:
+
   ```sh
   pip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
-  ```
-
-## Installation
-
-### 1. Clone the repository
-```sh
-git clone https://github.com/yourusername/CodebaseAnalyzer.git
-cd CodebaseAnalyzer
-```
-
-### 2. Install dependencies
-```sh
-pip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
-```
-
-### 3. Install Ollama and pull the Llama 3.2 model
-```sh
-# Get Ollama from https://ollama.ai/
-ollama pull llama3.2
-```
-
-## Usage
-
-### Example: Analyzing a GitHub Repository
-
-```python
-from codebase_analyzer import CodebaseAnalyzer
-
-# Initialize the analyzer with a GitHub repository
-analyzer = CodebaseAnalyzer(
-    repo_url="https://github.com/username/repository",
-    repo_name="LocalName",
-    db_directory="./chroma_db"
-)
-
-# Run the analysis
-report = analyzer.run_analysis()
-
-# The analysis results are saved as a JSON file
-print("Analysis completed!")
-```
-
-### Example: Analyzing the SakilaProject Repository
-```python
-analyzer = CodebaseAnalyzer(
-    repo_url="https://github.com/janjakovacevic/SakilaProject",
-    repo_name="SakilaProject",
-    db_directory="./chroma_sakila_db"
-)
-
-report = analyzer.run_analysis()
-```
-
-## How It Works
-1. **Downloads the code**: Clones the specified GitHub repository to your local system.
-2. **Reads the files**: Examines all source code files within the project.
-3. **Uses AI**: Utilizes AI to analyze and interpret the code structure and purpose.
-4. **Generates a report**: Creates a JSON file summarizing its findings.
-
-## Limitations
-- Works best with **smaller projects (under 100MB)**.
-- Optimized for **Java projects**, but supports other languages.
-- Accuracy depends on **AI model quality**.
-- May struggle with **highly complex codebases**.
-
-## License
-This project is licensed under the MIT License.
-
-## Contributors
-Feel free to contribute! Fork the repo, create a feature branch, and submit a pull request.
-
----
-**Made with ❤️ using AI.**
