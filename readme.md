@@ -1,113 +1,68 @@
-# CodebaseAnalyzer
+# Codebase Analyzer
 
-## What is CodebaseAnalyzer?
+This tool helps you understand GitHub projects by analyzing their code automatically.
 
-CodebaseAnalyzer is an AI-powered tool that analyzes GitHub repositories to understand their structure, functionality, and potential issues. It helps developers quickly grasp the purpose and key components of a codebase.
+## What Does It Do?
 
-## Features
+It takes a GitHub link, downloads the code, and uses AI to figure out:
+- What the project is about
+- What technologies it uses
+- How the code is organized
+- The main parts of the project
+- How complex the code is
 
-- **Download and analyze any GitHub repository**
-- **Identify key parts of the code**
-- **Summarize the project's purpose**# CodebaseAnalyzer
+## How to Set It Up
 
-## What is this?
+1. Make sure you have:
+   - Python installed on your computer
+   - Git installed on your computer
+   - Ollama - LLAMA3.2 (an AI tool) running on your computer
 
-CodebaseAnalyzer is a tool that looks at GitHub code projects and tells you what they do and how they work. It uses AI to read and understand code.
-
-## What can it do?
-
-- Download and study any GitHub project
-- Find the most important parts of the code
-- Tell you what the project is trying to do
-- Find possible problems in the code
-- Create a report you can read later
-
-## What you need
-
-- Python 3.8 or newer
-- Git
-- Ollama with the llama3.2 model
-- Some Python packages
-
-## How to install
-
-1. Get the code:
+2. Install the needed packages:
    ```
-   git clone https://github.com/yourusername/CodebaseAnalyzer.git
-   cd CodebaseAnalyzer
+   pip install gitpython langchain langchain_community tqdm
    ```
 
-2. Install needed packages:
-   ```
-   pip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
-   ```
+## How to Use It
 
-3. Make sure you have Ollama and the llama3.2 model:
-   ```
-   # Get Ollama from https://ollama.ai/
-   ollama pull llama3.2
-   ```
-
-## How to use it
+Here's a simple example:
 
 ```python
 from codebase_analyzer import CodebaseAnalyzer
 
-# Tell it which GitHub project to analyze
+# Point it to a GitHub repository
 analyzer = CodebaseAnalyzer(
-    repo_url="https://github.com/username/repository",
-    repo_name="LocalName",
-    db_directory="./chroma_db"
+    repo_url="https://github.com/username/repository"
 )
 
 # Run the analysis
-report = analyzer.run_analysis()
-
-# It saves the report as a JSON file
-print("Analysis done!")
+if analyzer.run_analysis():
+    # Save the results as a JSON file
+    analyzer.save_results("results.json")
+    print("Done! Check results.json")
+else:
+    print("Something went wrong")
 ```
 
-## Example
+## What You Get
 
-```python
-# Look at the SakilaProject
-analyzer = CodebaseAnalyzer(
-    repo_url="https://github.com/janjakovacevic/SakilaProject",
-    repo_name="SakilaProject",
-    db_directory="./chroma_sakila_db"
-)
-
-report = analyzer.run_analysis()
-```
-
-## How it works
-
-1. **Downloads the code**: Gets the GitHub project to your computer
-2. **Reads the files**: Looks at all the code files
-3. **Uses AI**: Analyzes the code using AI to understand it
-4. **Creates a report**: Makes a JSON file with what it found
+You'll get a JSON file with:
+- An overview of the project
+- Breakdown of the main components
+- Analysis of how the code is structured
 
 ## Limits
 
-- Works best with smaller projects (under 100MB)
-- Works better with Java projects, but can handle others
-- Depends on how good the AI model is
-- Might miss things in very complex code
+- It might take a while for big projects
+- It works best with well-organized code
+- The quality depends on the AI model it uses
 
-## Need help?
+## Example
 
-Feel free to ask questions or suggest improvements!
-- **Detect potential issues in the code**
-- **Generate a detailed report for later reference**
+Try it on your favorite GitHub project:
 
-## Requirements
-
-To use CodebaseAnalyzer, ensure you have the following installed:
-
-- Python **3.8** or newer
-- Git
-- **Ollama** with the **llama3.2** model
-- The following Python packages:
-
-  ```sh
-  pip install langchain chromadb git-python huggingface-hub sentence-transformers ollama
+```python
+analyzer = CodebaseAnalyzer(repo_url="https://github.com/janjakovacevic/SakilaProject")
+analyzer.run_analysis()
+analyzer.save_results("analysis.json")
+```

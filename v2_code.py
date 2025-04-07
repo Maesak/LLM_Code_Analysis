@@ -2,7 +2,7 @@ import os
 import json
 import git
 import glob
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import langchain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
@@ -13,6 +13,8 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.llms import Ollama
 import logging
+from fastapi import FastAPI, Query, HTTPException
+from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(
@@ -244,7 +246,7 @@ class CodebaseAnalyzer:
 
         # Query for Java files (assuming it's a Java project)
         java_docs = self.vectorstore.similarity_search(
-            "class public private void function method",
+            "class public private void function method",   # similar 5 -> key words search
             k=20,
             filter={"extension": ".java"},
         )
@@ -364,6 +366,72 @@ class CodebaseAnalyzer:
                 "potential_issues": [],
                 "dependencies": [],
             }
+            
+    def answer_question(self, question: str, k: int = 8) -> Dict[str, Any]:
+        """
+        Answer a specific question about the codebase using the LLM.
+        
+        Args:
+            question: The question to answer about the codebase
+            k: Number of relevant documents to retrieve
+            
+        Returns:
+            Dictionary containing the answer and supporting code excerpts
+        """
+        logger.info(f"Answering question: {question}")
+        
+        # Check if vectorstore is loaded
+        if not self.vectorstore:
+            logger.error("Vector store not loaded. Cannot answer questions.")
+            return {
+                "question": question,
+                "answer": "Error: Vector store not loaded. Please run analysis first.",
+                "sources": []
+            }
+            
+        # Retrieve relevant documents
+        docs = self.vectorstore.similarity_search(question, k=k)
+        
+        # Extract sources
+        sources = [
+            {
+                "file_path": doc.metadata["source"],
+                "file_name": doc.metadata["file_name"],
+                "extension": doc.metadata["extension"]
+            }
+            for doc in docs
+        ]
+        
+        # Concatenate relevant documents
+        context = "\n\n".join(
+            [f"File: {doc.metadata['source']}\n{doc.page_content}" for doc in docs]
+        )
+        
+        # Create prompt for question answering
+        prompt_template = """
+        You are a code analysis expert. Based on the following code excerpts from a project,
+        answer the question as accurately and comprehensively as possible.
+        
+        CODE EXCERPTS:
+        {context}
+        
+        QUESTION:
+        {question}
+        
+        Provide a detailed answer to the question, referencing specific parts of the code where relevant.
+        If the question cannot be answered based on the provided code, explain why.
+        """
+        
+        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+        chain = LLMChain(llm=self.llm, prompt=prompt)
+        
+        response = chain.run(context=context, question=question)
+        
+        return {
+            "question": question,
+            "answer": response.strip(),
+            "sources": sources
+        }
 
     def generate_final_report(self) -> Dict[str, Any]:
         """
@@ -389,7 +457,7 @@ class CodebaseAnalyzer:
             "key_methods": methods,
             "complexity_analysis": complexity,
             "metadata": {
-                "analysis_date": "2025-04-02",
+                "analysis_date": "2025-04-07",
                 "analyzer": "CodebaseAnalyzer",
                 "model": "llama3.2",
             },
@@ -431,7 +499,105 @@ class CodebaseAnalyzer:
         return report
 
 
+# FastAPI Models
+class QuestionRequest(BaseModel):
+    question: str
+    k: Optional[int] = 8
+
+class AnalysisRequest(BaseModel):
+    repo_url: str
+    repo_name: str
+    db_directory: Optional[str] = None
+
+# FastAPI App
+app = FastAPI(
+    title="Codebase Analyzer API",
+    description="API for analyzing GitHub repositories and answering questions about codebases",
+    version="1.0.0"
+)
+
+# Global analyzer instance
+analyzer_instance = None
+
+@app.post("/analyze", response_model=Dict[str, Any])
+async def analyze_repository(request: AnalysisRequest):
+    """
+    Analyze a GitHub repository and generate a comprehensive report.
+    """
+    global analyzer_instance
+    
+    try:
+        # Create a new analyzer instance
+        db_directory = request.db_directory or f"./chroma_{request.repo_name}_db"
+        analyzer_instance = CodebaseAnalyzer(
+            repo_url=request.repo_url,
+            repo_name=request.repo_name,
+            db_directory=db_directory
+        )
+        
+        # Run the analysis
+        report = analyzer_instance.run_analysis()
+        
+        return {
+            "status": "success",
+            "report": report
+        }
+    except Exception as e:
+        logger.error(f"Error analyzing repository: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@app.post("/ask", response_model=Dict[str, Any])
+async def ask_question(request: QuestionRequest):
+    """
+    Ask a question about the previously analyzed codebase.
+    """
+    global analyzer_instance
+    
+    if not analyzer_instance:
+        raise HTTPException(
+            status_code=400, 
+            detail="No repository has been analyzed yet. Please call /analyze endpoint first."
+        )
+        
+    try:
+        # Answer the question
+        answer = analyzer_instance.answer_question(
+            question=request.question,
+            k=request.k
+        )
+        
+        return {
+            "status": "success",
+            "result": answer
+        }
+    except Exception as e:
+        logger.error(f"Error answering question: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Question answering failed: {str(e)}")
+
+@app.get("/status", response_model=Dict[str, Any])
+async def get_status():
+    """
+    Get the current status of the analyzer.
+    """
+    global analyzer_instance
+    
+    if analyzer_instance:
+        return {
+            "status": "ready",
+            "repo_name": analyzer_instance.repo_name,
+            "repo_url": analyzer_instance.repo_url,
+            "db_directory": analyzer_instance.db_directory
+        }
+    else:
+        return {
+            "status": "not_initialized",
+            "message": "No repository has been analyzed yet."
+        }
+
+
 if __name__ == "__main__":
+    import uvicorn
+    
     # Initialize the analyzer with the SakilaProject repository
     analyzer = CodebaseAnalyzer(
         repo_url="https://github.com/janjakovacevic/SakilaProject",
@@ -442,6 +608,12 @@ if __name__ == "__main__":
     # Run the analysis
     report = analyzer.run_analysis()
 
+    # Example question
+    question_result = analyzer.answer_question("What are the main database tables used in this project?")
+    print("\n=== QUESTION ANSWERED ===")
+    print(f"Q: {question_result['question']}")
+    print(f"A: {question_result['answer']}")
+    
     # Print summary of findings
     print("\n=== ANALYSIS COMPLETE ===")
     print(f"Project: {report['project_overview'].get('project_name', 'Unknown')}")
@@ -449,3 +621,8 @@ if __name__ == "__main__":
     print(f"Complexity: {report['complexity_analysis'].get('overall_complexity', 'Unknown')}")
     print(f"Key Methods Found: {len(report['key_methods'])}")
     print("Full report saved to sakila_analysis_report.json")
+    
+    # Start the FastAPI server
+    print("\n=== STARTING API SERVER ===")
+    print("API documentation available at http://localhost:8000/docs")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
